@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traanscom — Discover Products You'll Love</title>
+  <meta name="description" content="Traanscom multi-category online store.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="header">
+  <div class="container nav">
+    <a class="logo" href="#">Traans<span>com</span></a>
+    <nav class="desktop-nav">
+      <a href="#home">Home</a><a href="#shop">Shop</a><a href="#categories">Categories</a>
+      <a href="#deals">Deals</a><a href="#about">About</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="icon-btn" id="searchBtn" aria-label="Search">⌕</button>
+      <button class="icon-btn" id="cartBtn" aria-label="Cart">🛒<b id="cartCount">0</b></button>
+      <button class="menu-btn" id="menuBtn">☰</button>
+    </div>
+  </div>
+  <div class="mobile-nav" id="mobileNav">
+    <a href="#home">Home</a><a href="#shop">Shop</a><a href="#categories">Categories</a><a href="#deals">Deals</a><a href="#about">About</a>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="home">
+  <div class="container hero-grid">
+    <div>
+      <p class="eyebrow">EVERYDAY SHOPPING, SIMPLIFIED</p>
+      <h1>Discover products<br><span>you'll love.</span></h1>
+      <p class="hero-text">Shop fashion, electronics, beauty, home essentials and more — all in one place.</p>
+      <div class="hero-buttons"><a href="#shop" class="btn primary">Shop Now →</a><a href="#categories" class="btn secondary">Explore Categories</a></div>
+      <div class="trust-row"><span>✓ Secure checkout</span><span>✓ Quality products</span><span>✓ Fast delivery</span></div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-product">NEW<br>ARRIVALS</div>
+      <div class="hero-sale"><small>UP TO</small><strong>30%</strong><small>OFF</small></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="categories">
+  <div class="container">
+    <div class="section-head"><div><p class="eyebrow">BROWSE</p><h2>Shop by category</h2></div></div>
+    <div class="category-grid" id="categoryGrid"></div>
+  </div>
+</section>
+
+<section class="section products-section" id="shop">
+  <div class="container">
+    <div class="section-head">
+      <div><p class="eyebrow">OUR STORE</p><h2>Popular products</h2></div>
+      <div class="shop-tools"><input id="searchInput" type="search" placeholder="Search products..."><select id="categoryFilter"><option value="all">All categories</option></select></div>
+    </div>
+    <div class="product-grid" id="productGrid"></div>
+    <p class="empty" id="emptyState" hidden>No products found.</p>
+  </div>
+</section>
+
+<section class="deal" id="deals">
+  <div class="container deal-inner">
+    <div><p class="eyebrow">LIMITED OFFER</p><h2>Fresh deals. Better prices.</h2><p>Save on selected products while the offer lasts.</p></div>
+    <a href="#shop" class="btn primary">View Deals →</a>
+  </div>
+</section>
+
+<section class="section about" id="about">
+  <div class="container about-grid">
+    <div><p class="eyebrow">WHY TRAANSCOM</p><h2>One store. Many things you need.</h2></div>
+    <div class="benefits"><div><b>01</b><h3>Wide selection</h3><p>Multiple categories in one convenient store.</p></div><div><b>02</b><h3>Easy shopping</h3><p>Simple browsing, cart and checkout experience.</p></div><div><b>03</b><h3>Customer first</h3><p>Clear product information and support-focused service.</p></div></div>
+  </div>
+</section>
+</main>
+
+<footer><div class="container footer-grid"><div><a class="logo" href="#">Traans<span>com</span></a><p>Discover products you'll love.</p></div><div><h4>Shop</h4><a href="#shop">All Products</a><a href="#categories">Categories</a><a href="#deals">Deals</a></div><div><h4>Help</h4><a href="#">Contact Us</a><a href="#">Shipping</a><a href="#">Returns</a></div><div><h4>Newsletter</h4><p>Get new arrivals and offers.</p><div class="newsletter"><input placeholder="Your email"><button>→</button></div></div></div><div class="copyright">© 2026 Traanscom. All rights reserved.</div></footer>
+
+<div class="overlay" id="overlay"></div>
+<aside class="cart-drawer" id="cartDrawer"><div class="drawer-head"><h2>Your Cart</h2><button id="closeCart">×</button></div><div id="cartItems" class="cart-items"></div><div class="cart-footer"><div><span>Subtotal</span><strong id="cartTotal">Rs. 0</strong></div><button class="btn primary full" id="checkoutBtn">Proceed to Checkout</button></div></aside>
+
+<div class="modal" id="productModal"><button class="modal-close" id="closeModal">×</button><div id="modalContent"></div></div>
+<div class="toast" id="toast"></div>
+<script src="script.js"></script>
+</body>
+</html>
