@@ -784,243 +784,155 @@ function openProduct(id) {
 
     console.log("OPEN PRODUCT:", id);
 
-  const productId = Number(id);
+    const productId = Number(id);
 
-  const product = products.find(
-    item => Number(item.id) === productId
-  );
-
-
-  if (!product) {
-
-    console.error(
-      "Product not found:",
-      productId
+    const product = products.find(
+        p => Number(p.id) === productId
     );
 
-    return;
-  }
+    if (!product) {
+        console.error("PRODUCT NOT FOUND:", productId);
+        return;
+    }
 
+    console.log("PRODUCT FOUND:", product);
 
-  const modalContent =
-    $("#modalContent");
+    const modal = document.getElementById("modal");
+    const modalContent = document.getElementById("modalContent");
 
-  if (!modalContent) {
-    return;
-  }
+    if (!modal) {
+        console.error("MODAL ELEMENT NOT FOUND");
+        return;
+    }
 
+    if (!modalContent) {
+        console.error("MODAL CONTENT ELEMENT NOT FOUND");
+        return;
+    }
 
-  const currency =
-    getCurrency(product);
-
-
-  const sellingPrice =
-    getSellingPrice(product);
-
-
-  const originalPrice =
-    Number(
-      product.price || 0
+    const price = Number(product.price || product.price_pkr || 0);
+    const salePrice = Number(
+        product.sale_price || product.sale_price_pkr || 0
     );
 
+    const stock = Number(product.stock || 0);
 
-  const salePrice =
-    Number(
-      product.sale_price || 0
-    );
+    const imageUrl =
+        product.image_url ||
+        product.primary_image_url ||
+        "";
 
+    const imageHTML = imageUrl
+        ? `<img src="${imageUrl}"
+                style="width:100%;height:100%;object-fit:contain;"
+                onerror="this.style.display='none';">`
+        : `<div style="font-size:80px;">${product.emoji || "🛍️"}</div>`;
 
-  const hasSale =
-    salePrice > 0 &&
-    originalPrice > 0 &&
-    salePrice < originalPrice;
+    modalContent.innerHTML = `
+        <div style="
+            display:flex;
+            flex-direction:column;
+            gap:20px;
+        ">
 
+            <div style="
+                width:100%;
+                height:280px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                background:#f8f8f8;
+                overflow:hidden;
+            ">
+                ${imageHTML}
+            </div>
 
-  const stock =
-    Number(
-      product.stock || 0
-    );
+            <div style="padding:10px 5px 20px;">
 
+                <h2 style="
+                    margin:0 0 10px;
+                    font-size:28px;
+                ">
+                    ${product.name || "Product"}
+                </h2>
 
-  const stockMessage =
-    stock > 0
-      ? `✓ ${stock} in stock`
-      : "✕ Out of stock";
+                <p style="
+                    margin:0 0 15px;
+                    color:#666;
+                    line-height:1.6;
+                ">
+                    ${product.description || "Quality product from Traanscom."}
+                </p>
 
+                <div style="
+                    font-size:24px;
+                    font-weight:700;
+                    margin-bottom:10px;
+                ">
+                    ₨ ${salePrice > 0 ? salePrice : price}
+                </div>
 
-  modalContent.innerHTML = `
+                <div style="
+                    margin-bottom:20px;
+                    color:${stock > 0 ? "green" : "red"};
+                    font-weight:600;
+                ">
+                    ${stock > 0 ? `✓ ${stock} in stock` : "✕ Out of stock"}
+                </div>
 
-    <div
-      class="modal-product-image"
-      style="
-        height:280px;
-        overflow:hidden;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-      "
-    >
+                <button
+                    id="modalAddToCart"
+                    ${stock <= 0 ? "disabled" : ""}
+                    style="
+                        width:100%;
+                        padding:14px;
+                        border:none;
+                        border-radius:8px;
+                        background:#111;
+                        color:#fff;
+                        font-size:16px;
+                        cursor:pointer;
+                    "
+                >
+                    ${stock > 0 ? "Add to Cart" : "Out of Stock"}
+                </button>
 
-      ${productImageHtml(
-        product,
-        "modal"
-      )}
+            </div>
+        </div>
+    `;
 
-    </div>
+    /* FORCE MODAL OPEN */
 
+    modal.classList.add("show");
 
-    <div
-      style="
-        padding:20px;
-      "
-    >
+    modal.style.display = "block";
+    modal.style.visibility = "visible";
+    modal.style.opacity = "1";
+    modal.style.pointerEvents = "auto";
+    modal.style.position = "fixed";
+    modal.style.zIndex = "999999";
+    modal.style.top = "50%";
+    modal.style.left = "50%";
+    modal.style.transform = "translate(-50%, -50%)";
+    modal.style.background = "#fff";
 
-      <p
-        style="
-          color:#777;
-          margin:0 0 5px;
-        "
-      >
-        ${escapeHtml(product.cat)}
-      </p>
+    console.log("✅ MODAL OPENED");
 
+    const addButton =
+        document.getElementById("modalAddToCart");
 
-      <h2
-        style="
-          margin:0 0 10px;
-        "
-      >
-        ${escapeHtml(product.name)}
-      </h2>
+    if (addButton && stock > 0) {
 
+        addButton.onclick = async function () {
 
-      <div
-        style="
-          margin-bottom:12px;
-        "
-      >
+            await addToCart(product.id);
 
-        <strong
-          style="
-            font-size:22px;
-          "
-        >
-          ${money(
-            sellingPrice,
-            currency
-          )}
-        </strong>
+            closeProduct();
 
-        ${
-          hasSale
-            ? `
-              <span
-                style="
-                  text-decoration:line-through;
-                  color:#999;
-                  margin-left:8px;
-                "
-              >
-                ${money(
-                  originalPrice,
-                  currency
-                )}
-              </span>
-            `
-            : ""
-        }
+        };
 
-      </div>
-
-
-      <p>
-        ${escapeHtml(
-          product.description ||
-          "Quality product from Traanscom."
-        )}
-      </p>
-
-
-      ${
-        product.sku
-          ? `
-            <p>
-              <strong>SKU:</strong>
-              ${escapeHtml(product.sku)}
-            </p>
-          `
-          : ""
-      }
-
-
-      <p
-        style="
-          font-weight:600;
-          margin-top:12px;
-        "
-      >
-        ${stockMessage}
-      </p>
-
-
-      <button
-        id="modalAddToCart"
-        style="
-          width:100%;
-          padding:13px;
-          border:0;
-          border-radius:8px;
-          background:#111;
-          color:white;
-          cursor:pointer;
-          margin-top:10px;
-          opacity:${stock <= 0 ? ".5" : "1"};
-        "
-        ${stock <= 0 ? "disabled" : ""}
-      >
-        ${
-          stock > 0
-            ? "Add to Cart"
-            : "Out of Stock"
-        }
-      </button>
-
-    </div>
-
-  `;
-
-
-  const addButton =
-    $("#modalAddToCart");
-
-  if (addButton) {
-
-    addButton.onclick = async () => {
-
-      await addToCart(
-        product.id
-      );
-
-      closeProduct();
-
-    };
-
-  }
-
-
-  const modal =
-    $("#modal");
-
-  if (modal) {
-
-    modal.classList.add(
-      "show"
-    );
-
-  }
-
+    }
 }
-
 
 // =====================================================
 // CLOSE PRODUCT
