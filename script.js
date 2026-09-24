@@ -1,9 +1,9 @@
+```javascript
 console.log("TRAANSCOM SCRIPT LOADED");
 
 const API_URL = "https://traanscom-backend-api.onrender.com";
 
 let products = [];
-
 let cart = [];
 
 try {
@@ -330,13 +330,6 @@ async function loadProducts() {
           p.sale_price_gbp ?? 0
         );
 
-
-      /*
-        Backend currently stores separate
-        PKR / USD / GBP prices.
-
-        Customer website currently displays PKR.
-      */
 
       return {
 
@@ -729,227 +722,518 @@ function renderProducts() {
   }
 
 
-// =====================================================
-// PRODUCT CLICK - EVENT DELEGATION
-// =====================================================
+  // ===================================================
+  // PRODUCT CLICK - EVENT DELEGATION
+  // ===================================================
 
-if (!grid.dataset.productClickAttached) {
+  if (!grid.dataset.productClickAttached) {
 
-  grid.addEventListener("click", function (event) {
+    grid.addEventListener(
+      "click",
+      function (event) {
 
-    const card =
-      event.target.closest(".product");
+        const card =
+          event.target.closest(".product");
 
-    if (!card) {
-      return;
-    }
+        if (!card) {
+          return;
+        }
 
-    const id =
-      Number(card.dataset.id);
+        const id =
+          Number(card.dataset.id);
 
-    console.log(
-      "PRODUCT CARD CLICKED:",
-      id
+        console.log(
+          "PRODUCT CARD CLICKED:",
+          id
+        );
+
+        if (!id) {
+
+          console.error(
+            "Product ID missing from card:",
+            card
+          );
+
+          return;
+        }
+
+        openProduct(id);
+
+      }
     );
 
-    if (!id) {
+    grid.dataset.productClickAttached =
+      "true";
 
-      console.error(
-        "Product ID missing from card:",
-        card
-      );
-
-      return;
-    }
-
-    openProduct(id);
-
-  });
-
-  grid.dataset.productClickAttached = "true";
-
-}
-/* =====================================================
-   CLOSE renderProducts()
-   ===================================================== */
+  }
 
 }
 
 
 // =====================================================
-// PRODUCT DETAILS
+// PRODUCT DETAILS / MODAL
 // =====================================================
 
 function openProduct(id) {
 
-    console.log("OPEN PRODUCT:", id);
+  console.log(
+    "OPEN PRODUCT:",
+    id
+  );
 
-    const productId = Number(id);
 
-    const product = products.find(
-        p => Number(p.id) === productId
+  const productId =
+    Number(id);
+
+
+  const product =
+    products.find(
+      p =>
+        Number(p.id) ===
+        productId
     );
 
-    if (!product) {
-        console.error("PRODUCT NOT FOUND:", productId);
-        return;
-    }
 
-    console.log("PRODUCT FOUND:", product);
+  if (!product) {
 
-    const modal = document.getElementById("modal");
-    const modalContent = document.getElementById("modalContent");
-
-    if (!modal) {
-        console.error("MODAL ELEMENT NOT FOUND");
-        return;
-    }
-
-    if (!modalContent) {
-        console.error("MODAL CONTENT ELEMENT NOT FOUND");
-        return;
-    }
-
-    const price = Number(product.price || product.price_pkr || 0);
-    const salePrice = Number(
-        product.sale_price || product.sale_price_pkr || 0
+    console.error(
+      "PRODUCT NOT FOUND:",
+      productId
     );
 
-    const stock = Number(product.stock || 0);
+    return;
+  }
 
-    const imageUrl =
-        product.image_url ||
-        product.primary_image_url ||
-        "";
 
-    const imageHTML = imageUrl
-        ? `<img src="${imageUrl}"
-                style="width:100%;height:100%;object-fit:contain;"
-                onerror="this.style.display='none';">`
-        : `<div style="font-size:80px;">${product.emoji || "🛍️"}</div>`;
+  console.log(
+    "PRODUCT FOUND:",
+    product
+  );
 
-    modalContent.innerHTML = `
-        <div style="
-            display:flex;
-            flex-direction:column;
-            gap:20px;
-        ">
 
-            <div style="
-                width:100%;
-                height:280px;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                background:#f8f8f8;
-                overflow:hidden;
-            ">
-                ${imageHTML}
-            </div>
+  const modal =
+    document.getElementById(
+      "modal"
+    );
 
-            <div style="padding:10px 5px 20px;">
 
-                <h2 style="
-                    margin:0 0 10px;
-                    font-size:28px;
-                ">
-                    ${product.name || "Product"}
-                </h2>
+  const modalContent =
+    document.getElementById(
+      "modalContent"
+    );
 
-                <p style="
-                    margin:0 0 15px;
-                    color:#666;
-                    line-height:1.6;
-                ">
-                    ${product.description || "Quality product from Traanscom."}
-                </p>
 
-                <div style="
-                    font-size:24px;
-                    font-weight:700;
-                    margin-bottom:10px;
-                ">
-                    ₨ ${salePrice > 0 ? salePrice : price}
-                </div>
+  if (!modal) {
 
-                <div style="
-                    margin-bottom:20px;
-                    color:${stock > 0 ? "green" : "red"};
-                    font-weight:600;
-                ">
-                    ${stock > 0 ? `✓ ${stock} in stock` : "✕ Out of stock"}
-                </div>
+    console.error(
+      "MODAL ELEMENT NOT FOUND"
+    );
 
-                <button
-                    id="modalAddToCart"
-                    ${stock <= 0 ? "disabled" : ""}
-                    style="
-                        width:100%;
-                        padding:14px;
-                        border:none;
-                        border-radius:8px;
-                        background:#111;
-                        color:#fff;
-                        font-size:16px;
-                        cursor:pointer;
-                    "
-                >
-                    ${stock > 0 ? "Add to Cart" : "Out of Stock"}
-                </button>
+    return;
+  }
 
-            </div>
+
+  if (!modalContent) {
+
+    console.error(
+      "MODAL CONTENT ELEMENT NOT FOUND"
+    );
+
+    return;
+  }
+
+
+  const price =
+    Number(
+      product.price ||
+      product.price_pkr ||
+      0
+    );
+
+
+  const salePrice =
+    Number(
+      product.sale_price ||
+      product.sale_price_pkr ||
+      0
+    );
+
+
+  const stock =
+    Number(
+      product.stock || 0
+    );
+
+
+  const imageUrl =
+    getProductImageUrl(
+      product.image_url ||
+      product.primary_image_url ||
+      ""
+    );
+
+
+  const imageHTML =
+    imageUrl
+
+      ? `
+        <img
+          src="${escapeHtml(imageUrl)}"
+          alt="${escapeHtml(product.name)}"
+          style="
+            width:100%;
+            height:100%;
+            object-fit:contain;
+            display:block;
+          "
+          onerror="
+            this.style.display='none';
+            if(this.nextElementSibling){
+              this.nextElementSibling.style.display='flex';
+            }
+          "
+        >
+
+        <div
+          style="
+            display:none;
+            width:100%;
+            height:100%;
+            align-items:center;
+            justify-content:center;
+            font-size:80px;
+          "
+        >
+          ${product.emoji || "🛍️"}
         </div>
-    `;
+      `
 
-    /* FORCE MODAL OPEN */
+      : `
+        <div
+          style="
+            width:100%;
+            height:100%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:80px;
+          "
+        >
+          ${product.emoji || "🛍️"}
+        </div>
+      `;
 
-    modal.classList.add("show");
 
-    modal.style.display = "block";
-    modal.style.visibility = "visible";
-    modal.style.opacity = "1";
-    modal.style.pointerEvents = "auto";
-    modal.style.position = "fixed";
-    modal.style.zIndex = "999999";
-    modal.style.top = "50%";
-    modal.style.left = "50%";
-    modal.style.transform = "translate(-50%, -50%)";
-    modal.style.background = "#fff";
+  modalContent.innerHTML = `
 
-    console.log("✅ MODAL OPENED");
+    <div
+      style="
+        display:flex;
+        flex-direction:column;
+        gap:20px;
+      "
+    >
 
-    const addButton =
-        document.getElementById("modalAddToCart");
+      <div
+        style="
+          width:100%;
+          height:280px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          background:#f8f8f8;
+          overflow:hidden;
+          border-radius:10px;
+        "
+      >
+        ${imageHTML}
+      </div>
 
-    if (addButton && stock > 0) {
 
-        addButton.onclick = async function () {
+      <div
+        style="
+          padding:10px 5px 20px;
+        "
+      >
 
-            await addToCart(product.id);
+        <h2
+          style="
+            margin:0 0 10px;
+            font-size:28px;
+          "
+        >
+          ${escapeHtml(
+            product.name ||
+            "Product"
+          )}
+        </h2>
 
-            closeProduct();
 
-        };
+        <p
+          style="
+            margin:0 0 15px;
+            color:#666;
+            line-height:1.6;
+          "
+        >
+          ${escapeHtml(
+            product.description ||
+            "Quality product from Traanscom."
+          )}
+        </p>
 
-    }
+
+        <div
+          style="
+            font-size:24px;
+            font-weight:700;
+            margin-bottom:10px;
+          "
+        >
+          ${money(
+            salePrice > 0
+              ? salePrice
+              : price,
+            "PKR"
+          )}
+        </div>
+
+
+        <div
+          style="
+            margin-bottom:20px;
+            color:${stock > 0 ? "green" : "red"};
+            font-weight:600;
+          "
+        >
+          ${
+            stock > 0
+              ? `✓ ${stock} in stock`
+              : "✕ Out of stock"
+          }
+        </div>
+
+
+        <button
+          id="modalAddToCart"
+          type="button"
+          ${stock <= 0 ? "disabled" : ""}
+          style="
+            width:100%;
+            padding:14px;
+            border:none;
+            border-radius:8px;
+            background:#111;
+            color:#fff;
+            font-size:16px;
+            cursor:${stock > 0 ? "pointer" : "not-allowed"};
+          "
+        >
+          ${
+            stock > 0
+              ? "Add to Cart"
+              : "Out of Stock"
+          }
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  // ===================================================
+  // FORCE MODAL OPEN
+  // ===================================================
+
+  modal.classList.add("show");
+
+  modal.style.display =
+    "block";
+
+  modal.style.visibility =
+    "visible";
+
+  modal.style.opacity =
+    "1";
+
+  modal.style.pointerEvents =
+    "auto";
+
+  modal.style.position =
+    "fixed";
+
+  modal.style.zIndex =
+    "999999";
+
+  modal.style.top =
+    "50%";
+
+  modal.style.left =
+    "50%";
+
+  modal.style.transform =
+    "translate(-50%, -50%)";
+
+  modal.style.background =
+    "#fff";
+
+
+  console.log(
+    "✅ MODAL OPENED"
+  );
+
+
+  // ===================================================
+  // CLOSE BUTTON - DIRECTLY ATTACHED
+  // ===================================================
+
+  const closeButton =
+    document.getElementById(
+      "closeModal"
+    );
+
+
+  if (closeButton) {
+
+    closeButton.onclick =
+      function (event) {
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+        closeProduct();
+
+      };
+
+  }
+
+
+  // ===================================================
+  // ADD TO CART BUTTON
+  // ===================================================
+
+  const addButton =
+    document.getElementById(
+      "modalAddToCart"
+    );
+
+
+  if (
+    addButton &&
+    stock > 0
+  ) {
+
+    addButton.onclick =
+      async function (event) {
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+
+        if (
+          addButton.disabled
+        ) {
+          return;
+        }
+
+
+        addButton.disabled =
+          true;
+
+        addButton.textContent =
+          "Adding...";
+
+
+        try {
+
+          await addToCart(
+            product.id
+          );
+
+
+          // Close modal after
+          // successful local cart update
+          closeProduct();
+
+
+        } catch (error) {
+
+          console.error(
+            "Add to cart error:",
+            error
+          );
+
+
+          addButton.disabled =
+            false;
+
+          addButton.textContent =
+            "Add to Cart";
+
+        }
+
+      };
+
+  }
+
 }
 
+
 // =====================================================
-// CLOSE PRODUCT
+// CLOSE PRODUCT MODAL
 // =====================================================
 
 function closeProduct() {
 
   const modal =
-    $("#modal");
-
-  if (modal) {
-
-    modal.classList.remove(
-      "show"
+    document.getElementById(
+      "modal"
     );
 
+
+  if (!modal) {
+
+    console.error(
+      "MODAL NOT FOUND"
+    );
+
+    return;
   }
+
+
+  modal.classList.remove(
+    "show"
+  );
+
+
+  modal.classList.remove(
+    "open"
+  );
+
+
+  modal.style.display =
+    "none";
+
+  modal.style.visibility =
+    "hidden";
+
+  modal.style.opacity =
+    "0";
+
+  modal.style.pointerEvents =
+    "none";
+
+  modal.style.transform =
+    "translate(-50%, -50%)";
+
+
+  console.log(
+    "✅ PRODUCT MODAL CLOSED"
+  );
 
 }
 
@@ -1269,11 +1553,6 @@ function renderCart() {
   }
 
 
-  /*
-    Remove invalid products
-    from local cart.
-  */
-
   cart =
     cart.filter(item =>
       products.some(
@@ -1408,11 +1687,6 @@ function renderCart() {
       })
       .join("");
 
-
-  /*
-    Attach quantity buttons
-    after cart HTML is rendered.
-  */
 
   cartItems
     .querySelectorAll(
@@ -4593,8 +4867,8 @@ async function saveShippingAddress(event) {
 
             })
 
-        }
-      );
+          }
+        );
 
 
     const checkoutData =
@@ -4758,18 +5032,41 @@ function attachButtonEvents() {
   if (closeCartBtn) {
 
     closeCartBtn.onclick =
-      closeCart;
+      function (event) {
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+        closeCart();
+
+      };
 
   }
 
 
+  // ===================================================
+  // PRODUCT MODAL CLOSE BUTTON
+  // ===================================================
+
   const closeModalBtn =
-    $("#closeModal");
+    document.getElementById(
+      "closeModal"
+    );
+
 
   if (closeModalBtn) {
 
     closeModalBtn.onclick =
-      closeProduct;
+      function (event) {
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+        closeProduct();
+
+      };
 
   }
 
@@ -4780,10 +5077,18 @@ function attachButtonEvents() {
   if (overlay) {
 
     overlay.onclick =
-      () => {
+      function (event) {
 
-        closeCart();
-        closeProduct();
+        if (
+          event.target ===
+          overlay
+        ) {
+
+          closeCart();
+
+          closeProduct();
+
+        }
 
       };
 
@@ -4905,3 +5210,4 @@ if (
   initTraanscom();
 
 }
+```
