@@ -138,7 +138,7 @@ function getProductImageUrl(imageUrl) {
   }
 
   return (
-    "https://traanscom-backend.onrender.com" +
+    API_URL +
     imageUrl
   );
 }
@@ -208,7 +208,7 @@ function productImageHtml(
 
 
 // =====================================================
-// LOAD PRODUCTS FROM BACKEND
+// LOAD PRODUCTS
 // =====================================================
 
 async function loadProducts() {
@@ -217,8 +217,8 @@ async function loadProducts() {
 
     const response =
       await fetch(
-  `${API_URL}/api/products`
-);
+        `${API_URL}/api/products`
+      );
 
     if (!response.ok) {
 
@@ -333,8 +333,7 @@ async function loadProducts() {
 
           Unable to load products.
 
-          Please make sure the
-          Traanscom backend is running.
+          Please try again later.
 
         </p>
 
@@ -637,11 +636,8 @@ function openProduct(id) {
 
 
   const stockMessage =
-
     product.stock > 0
-
       ? `✓ ${product.stock} in stock`
-
       : "✕ Out of stock";
 
 
@@ -652,133 +648,148 @@ function openProduct(id) {
 
   $("#modalContent").innerHTML = `
 
-    <div class="modal-product">
+    <div
+      class="modal-product-image"
+      style="
+        height:280px;
+        overflow:hidden;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      "
+    >
+
+      ${productImageHtml(
+        product,
+        "modal"
+      )}
+
+    </div>
+
+
+    <div
+      style="
+        padding:20px;
+      "
+    >
+
+      <p
+        style="
+          color:#777;
+          margin:0 0 5px;
+        "
+      >
+        ${product.cat}
+      </p>
+
+
+      <h2
+        style="
+          margin:0 0 10px;
+        "
+      >
+        ${product.name}
+      </h2>
+
 
       <div
-        class="modal-img"
         style="
-          overflow:hidden;
-          min-height:300px;
-          display:flex;
-          align-items:center;
-          justify-content:center;
+          margin-bottom:12px;
         "
       >
 
-        ${productImageHtml(
-          product,
-          "modal"
-        )}
-
-      </div>
-
-
-      <div>
-
-        <p class="eyebrow">
-          ${product.cat}
-        </p>
-
-
-        <h2>
-          ${product.name}
-        </h2>
-
-
-        <p class="price">
-
+        <strong
+          style="
+            font-size:22px;
+          "
+        >
           ${money(
             sellingPrice,
             currency
           )}
-
-          ${
-            hasSale
-              ? `
-                <span
-                  style="
-                    text-decoration:line-through;
-                    color:#999;
-                    font-size:15px;
-                    margin-left:8px;
-                  "
-                >
-                  ${money(
-                    originalPrice,
-                    currency
-                  )}
-                </span>
-              `
-              : ""
-          }
-
-        </p>
-
-
-        <p class="desc">
-          ${product.desc}
-        </p>
-
-
-        <p>
-
-          ${stockMessage}
-
-          &nbsp;
-
-          ✓ Secure checkout
-
-        </p>
-
+        </strong>
 
         ${
-          product.stock > 0
-
+          hasSale
             ? `
-
-              <button
-                class="btn primary"
-                onclick="
-                  addToCart(${product.id});
-                  closeProduct();
+              <span
+                style="
+                  text-decoration:line-through;
+                  color:#999;
+                  margin-left:8px;
                 "
               >
-                Add to Cart
-              </button>
-
+                ${money(
+                  originalPrice,
+                  currency
+                )}
+              </span>
             `
-
-            : `
-
-              <button
-                class="btn primary"
-                disabled
-              >
-                Out of Stock
-              </button>
-
-            `
+            : ""
         }
 
       </div>
+
+
+      <p>
+        ${
+          product.description ||
+          "Quality product from Traanscom."
+        }
+      </p>
+
+
+      <p
+        style="
+          font-weight:600;
+          margin-top:12px;
+        "
+      >
+        ${stockMessage}
+      </p>
+
+
+      <button
+        onclick="
+          addToCart(${product.id});
+          closeProduct();
+        "
+        ${
+          product.stock <= 0
+            ? "disabled"
+            : ""
+        }
+        style="
+          width:100%;
+          padding:13px;
+          border:0;
+          border-radius:8px;
+          background:#111;
+          color:white;
+          cursor:pointer;
+          margin-top:10px;
+          opacity:${
+            product.stock <= 0
+              ? ".5"
+              : "1"
+          };
+        "
+      >
+        ${
+          product.stock > 0
+            ? "Add to Cart"
+            : "Out of Stock"
+        }
+      </button>
 
     </div>
 
   `;
 
 
-  if ($("#productModal")) {
+  if ($("#modal")) {
 
-    $("#productModal")
-      .classList
-      .add("open");
-
-  }
-
-
-  if ($("#overlay")) {
-
-    $("#overlay")
+    $("#modal")
       .classList
       .add("show");
 
@@ -793,18 +804,9 @@ function openProduct(id) {
 
 function closeProduct() {
 
-  if ($("#productModal")) {
+  if ($("#modal")) {
 
-    $("#productModal")
-      .classList
-      .remove("open");
-
-  }
-
-
-  if ($("#overlay")) {
-
-    $("#overlay")
+    $("#modal")
       .classList
       .remove("show");
 
@@ -814,7 +816,7 @@ function closeProduct() {
 
 
 // =====================================================
-// LOAD CART FROM BACKEND
+// CART FROM BACKEND
 // =====================================================
 
 async function loadCartFromBackend() {
@@ -834,7 +836,7 @@ async function loadCartFromBackend() {
 
     const response =
       await fetch(
-        `${API_URL}/cart`,
+        `${API_URL}/api/cart`,
         {
           method: "GET",
 
@@ -981,30 +983,40 @@ async function addToCart(id) {
 
     try {
 
-      await fetch(
-        `${API_URL}/cart`,
-        {
-          method: "POST",
+      const response =
+        await fetch(
+          `${API_URL}/api/cart`,
+          {
+            method: "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
+            headers: {
+              "Content-Type":
+                "application/json",
 
-            "Authorization":
-              "Bearer " + token
-          },
+              "Authorization":
+                "Bearer " + token
+            },
 
-          body:
-            JSON.stringify({
+            body:
+              JSON.stringify({
 
-              product_id: id,
+                product_id: id,
 
-              quantity: 1
+                quantity: 1
 
-            })
+              })
 
-        }
-      );
+          }
+        );
+
+
+      if (!response.ok) {
+
+        console.warn(
+          "Backend cart add failed"
+        );
+
+      }
 
     } catch (error) {
 
@@ -1235,20 +1247,24 @@ function renderCart() {
 
   if ($("#cartTotal")) {
 
-    const firstProduct =
-      products.find(
-        p =>
-          cart.some(
-            item =>
-              item.id === p.id
-          )
-      );
+    const currencies =
+      cart
+        .map(item => {
+
+          const product =
+            products.find(
+              p => p.id === item.id
+            );
+
+          return product
+            ? getCurrency(product)
+            : "PKR";
+
+        });
 
 
     const currency =
-      firstProduct
-        ? getCurrency(firstProduct)
-        : "PKR";
+      currencies[0] || "PKR";
 
 
     $("#cartTotal")
@@ -1264,10 +1280,13 @@ function renderCart() {
 
 
 // =====================================================
-// CHANGE QUANTITY
+// CHANGE CART QUANTITY
 // =====================================================
 
-function changeQty(id, difference) {
+async function changeQty(
+  id,
+  delta
+) {
 
   const item =
     cart.find(
@@ -1281,46 +1300,112 @@ function changeQty(id, difference) {
     );
 
 
-  if (!item || !product) {
+  if (
+    !item ||
+    !product
+  ) {
     return;
   }
 
 
-  item.qty += difference;
+  const newQty =
+    item.qty + delta;
 
 
-  if (
-    item.qty >
-    product.stock
-  ) {
-
-    item.qty =
-      product.stock;
-
-    toast(
-      "Maximum stock reached"
-    );
-
-  }
-
-
-  if (item.qty <= 0) {
+  if (newQty <= 0) {
 
     cart =
       cart.filter(
         x => x.id !== id
       );
 
+  } else if (
+    newQty > product.stock
+  ) {
+
+    toast(
+      "Maximum available stock reached"
+    );
+
+    return;
+
+  } else {
+
+    item.qty =
+      newQty;
+
   }
 
 
   saveCart();
 
+
+  const token =
+    localStorage.getItem(
+      "traanscomToken"
+    );
+
+
+  if (token) {
+
+    try {
+
+      if (newQty <= 0) {
+
+        await fetch(
+          `${API_URL}/api/cart/${id}`,
+          {
+            method: "DELETE",
+
+            headers: {
+              "Authorization":
+                "Bearer " + token
+            }
+
+          }
+        );
+
+      } else {
+
+        await fetch(
+          `${API_URL}/api/cart/${id}`,
+          {
+            method: "PUT",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              "Authorization":
+                "Bearer " + token
+            },
+
+            body:
+              JSON.stringify({
+                quantity: newQty
+              })
+
+          }
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Cart update error:",
+        error
+      );
+
+    }
+
+  }
+
 }
 
 
 // =====================================================
-// CART DRAWER
+// OPEN CART
 // =====================================================
 
 function openCart() {
@@ -1333,7 +1418,6 @@ function openCart() {
 
   }
 
-
   if ($("#overlay")) {
 
     $("#overlay")
@@ -1342,8 +1426,14 @@ function openCart() {
 
   }
 
+  renderCart();
+
 }
 
+
+// =====================================================
+// CLOSE CART
+// =====================================================
 
 function closeCart() {
 
@@ -1354,7 +1444,6 @@ function closeCart() {
       .remove("open");
 
   }
-
 
   if ($("#overlay")) {
 
@@ -1373,35 +1462,83 @@ function closeCart() {
 
 function toast(message) {
 
-  if (!$("#toast")) {
-    return;
+  let toastBox =
+    document.getElementById(
+      "traanscomToast"
+    );
+
+
+  if (!toastBox) {
+
+    toastBox =
+      document.createElement(
+        "div"
+      );
+
+
+    toastBox.id =
+      "traanscomToast";
+
+
+    toastBox.style.cssText = `
+
+      position:fixed;
+
+      bottom:25px;
+
+      right:25px;
+
+      z-index:20000;
+
+      background:#111;
+
+      color:white;
+
+      padding:13px 18px;
+
+      border-radius:10px;
+
+      box-shadow:
+        0 10px 30px
+        rgba(0,0,0,.2);
+
+      font-size:14px;
+
+      max-width:320px;
+
+    `;
+
+
+    document.body.appendChild(
+      toastBox
+    );
+
   }
 
 
-  $("#toast")
-    .textContent =
+  toastBox.textContent =
     message;
 
 
-  $("#toast")
-    .classList
-    .add("show");
+  toastBox.style.display =
+    "block";
 
 
-  setTimeout(
-    () => {
-
-      if ($("#toast")) {
-
-        $("#toast")
-          .classList
-          .remove("show");
-
-      }
-
-    },
-    1800
+  clearTimeout(
+    toastBox._timer
   );
+
+
+  toastBox._timer =
+    setTimeout(
+      () => {
+
+        toastBox.style.display =
+          "none";
+
+      },
+      3000
+    );
 
 }
 
@@ -1412,11 +1549,40 @@ function toast(message) {
 
 async function checkout() {
 
+  try {
+
+    const savedCart =
+      JSON.parse(
+        localStorage.getItem(
+          "traanscomCart"
+        ) || "[]"
+      );
+
+
+    if (Array.isArray(savedCart)) {
+
+      cart =
+        savedCart;
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Unable to read saved cart:",
+      error
+    );
+
+  }
+
+
   if (!cart.length) {
 
     toast(
       "Your cart is empty"
     );
+
+    renderCart();
 
     return;
 
@@ -1435,65 +1601,726 @@ async function checkout() {
       "Please login before checkout"
     );
 
-
-    const loginOverlay =
-      document.getElementById(
-        "loginOverlay"
-      );
-
-
-    if (loginOverlay) {
-
-      loginOverlay.style.display =
-        "flex";
-
-    }
-
+    openLoginOverlay();
 
     return;
 
   }
 
 
-  const checkoutBtn =
-    $("#checkoutBtn");
+  openShippingAddressModal();
+
+}
+
+
+// =====================================================
+// LOGIN / REGISTER UI
+// =====================================================
+
+function createLoginUI() {
+
+  if (
+    document.getElementById(
+      "loginOverlay"
+    )
+  ) {
+    return;
+  }
+
+
+  const overlay =
+    document.createElement(
+      "div"
+    );
+
+
+  overlay.id =
+    "loginOverlay";
+
+
+  overlay.style.cssText = `
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+      rgba(0,0,0,.55);
+
+    display:none;
+
+    align-items:center;
+
+    justify-content:center;
+
+    z-index:10000;
+
+    padding:20px;
+
+    box-sizing:border-box;
+
+  `;
+
+
+  const box =
+    document.createElement(
+      "div"
+    );
+
+
+  box.id =
+    "loginBox";
+
+
+  box.style.cssText = `
+
+    width:430px;
+
+    max-width:100%;
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:28px;
+
+    box-sizing:border-box;
+
+    box-shadow:
+      0 20px 60px
+      rgba(0,0,0,.25);
+
+  `;
+
+
+  overlay.appendChild(
+    box
+  );
+
+
+  document.body.appendChild(
+    overlay
+  );
+
+
+  overlay.onclick =
+    event => {
+
+      if (
+        event.target === overlay
+      ) {
+
+        overlay.style.display =
+          "none";
+
+      }
+
+    };
+
+
+  const loginButton =
+    document.createElement(
+      "button"
+    );
+
+
+  loginButton.id =
+    "loginButton";
+
+
+  loginButton.textContent =
+    "Login";
+
+
+  loginButton.style.cssText = `
+
+    position:fixed;
+
+    right:20px;
+
+    bottom:20px;
+
+    z-index:9000;
+
+    border:0;
+
+    border-radius:999px;
+
+    padding:12px 20px;
+
+    background:#111;
+
+    color:white;
+
+    cursor:pointer;
+
+    box-shadow:
+      0 8px 25px
+      rgba(0,0,0,.2);
+
+  `;
+
+
+  loginButton.onclick =
+    openLoginOverlay;
+
+
+  document.body.appendChild(
+    loginButton
+  );
+
+
+  showLoginForm();
+
+}
+
+
+// =====================================================
+// LOGIN FORM
+// =====================================================
+
+function showLoginForm() {
+
+  const box =
+    document.getElementById(
+      "loginBox"
+    );
+
+
+  if (!box) {
+    return;
+  }
+
+
+  box.innerHTML = `
+
+    <div
+      style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:20px;
+      "
+    >
+
+      <div>
+
+        <p
+          style="
+            margin:0 0 4px;
+            color:#777;
+            font-size:12px;
+            letter-spacing:1px;
+          "
+        >
+          TRAANSCOM
+        </p>
+
+
+        <h2
+          style="
+            margin:0;
+          "
+        >
+          Login
+        </h2>
+
+      </div>
+
+
+      <button
+        id="closeLogin"
+        style="
+          border:0;
+          background:#eee;
+          width:36px;
+          height:36px;
+          border-radius:50%;
+          font-size:22px;
+          cursor:pointer;
+        "
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <form id="loginForm">
+
+      <label
+        style="
+          display:block;
+          margin-bottom:6px;
+          font-weight:600;
+        "
+      >
+        Email
+      </label>
+
+
+      <input
+        id="loginEmail"
+        type="email"
+        required
+        autocomplete="email"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          margin-bottom:14px;
+        "
+      >
+
+
+      <label
+        style="
+          display:block;
+          margin-bottom:6px;
+          font-weight:600;
+        "
+      >
+        Password
+      </label>
+
+
+      <input
+        id="loginPassword"
+        type="password"
+        required
+        autocomplete="current-password"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          margin-bottom:18px;
+        "
+      >
+
+
+      <button
+        type="submit"
+        id="loginSubmit"
+        style="
+          width:100%;
+          padding:13px;
+          border:0;
+          border-radius:8px;
+          background:#111;
+          color:white;
+          cursor:pointer;
+        "
+      >
+        Login
+      </button>
+
+    </form>
+
+
+    <p
+      style="
+        text-align:center;
+        margin:18px 0 0;
+      "
+    >
+
+      Don't have an account?
+
+      <button
+        id="showRegister"
+        type="button"
+        style="
+          border:0;
+          background:none;
+          padding:0;
+          cursor:pointer;
+          font-weight:700;
+        "
+      >
+        Create Account
+      </button>
+
+    </p>
+
+  `;
+
+
+  document.getElementById(
+    "closeLogin"
+  ).onclick =
+    closeLoginOverlay;
+
+
+  document.getElementById(
+    "showRegister"
+  ).onclick =
+    showRegisterForm;
+
+
+  document.getElementById(
+    "loginForm"
+  ).onsubmit =
+    loginUser;
+
+}
+
+
+// =====================================================
+// REGISTER FORM
+// =====================================================
+
+function showRegisterForm() {
+
+  const box =
+    document.getElementById(
+      "loginBox"
+    );
+
+
+  if (!box) {
+    return;
+  }
+
+
+  box.innerHTML = `
+
+    <div
+      style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:20px;
+      "
+    >
+
+      <div>
+
+        <p
+          style="
+            margin:0 0 4px;
+            color:#777;
+            font-size:12px;
+            letter-spacing:1px;
+          "
+        >
+          TRAANSCOM
+        </p>
+
+
+        <h2
+          style="
+            margin:0;
+          "
+        >
+          Create Account
+        </h2>
+
+      </div>
+
+
+      <button
+        id="closeRegister"
+        type="button"
+        style="
+          border:0;
+          background:#eee;
+          width:36px;
+          height:36px;
+          border-radius:50%;
+          font-size:22px;
+          cursor:pointer;
+        "
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <form id="registerForm">
+
+      <label
+        style="
+          display:block;
+          margin-bottom:6px;
+          font-weight:600;
+        "
+      >
+        Full Name
+      </label>
+
+
+      <input
+        id="registerName"
+        type="text"
+        required
+        autocomplete="name"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          margin-bottom:14px;
+        "
+      >
+
+
+      <label
+        style="
+          display:block;
+          margin-bottom:6px;
+          font-weight:600;
+        "
+      >
+        Email
+      </label>
+
+
+      <input
+        id="registerEmail"
+        type="email"
+        required
+        autocomplete="email"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          margin-bottom:14px;
+        "
+      >
+
+
+      <label
+        style="
+          display:block;
+          margin-bottom:6px;
+          font-weight:600;
+        "
+      >
+        Phone
+      </label>
+
+
+      <input
+        id="registerPhone"
+        type="tel"
+        autocomplete="tel"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          margin-bottom:14px;
+        "
+      >
+
+
+      <label
+        style="
+          display:block;
+          margin-bottom:6px;
+          font-weight:600;
+        "
+      >
+        Password
+      </label>
+
+
+      <input
+        id="registerPassword"
+        type="password"
+        required
+        minlength="6"
+        autocomplete="new-password"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          margin-bottom:18px;
+        "
+      >
+
+
+      <button
+        type="submit"
+        id="registerSubmit"
+        style="
+          width:100%;
+          padding:13px;
+          border:0;
+          border-radius:8px;
+          background:#111;
+          color:white;
+          cursor:pointer;
+        "
+      >
+        Create Account
+      </button>
+
+    </form>
+
+
+    <p
+      style="
+        text-align:center;
+        margin:18px 0 0;
+      "
+    >
+
+      Already have an account?
+
+      <button
+        id="showLogin"
+        type="button"
+        style="
+          border:0;
+          background:none;
+          padding:0;
+          cursor:pointer;
+          font-weight:700;
+        "
+      >
+        Login
+      </button>
+
+    </p>
+
+  `;
+
+
+  document.getElementById(
+    "closeRegister"
+  ).onclick =
+    closeLoginOverlay;
+
+
+  document.getElementById(
+    "showLogin"
+  ).onclick =
+    showLoginForm;
+
+
+  document.getElementById(
+    "registerForm"
+  ).onsubmit =
+    registerUser;
+
+}
+
+
+// =====================================================
+// OPEN LOGIN
+// =====================================================
+
+function openLoginOverlay() {
+
+  const overlay =
+    document.getElementById(
+      "loginOverlay"
+    );
+
+
+  if (!overlay) {
+    return;
+  }
+
+
+  showLoginForm();
+
+
+  overlay.style.display =
+    "flex";
+
+}
+
+
+// =====================================================
+// CLOSE LOGIN
+// =====================================================
+
+function closeLoginOverlay() {
+
+  const overlay =
+    document.getElementById(
+      "loginOverlay"
+    );
+
+
+  if (overlay) {
+
+    overlay.style.display =
+      "none";
+
+  }
+
+}
+
+
+// =====================================================
+// LOGIN
+// =====================================================
+
+async function loginUser(event) {
+
+  event.preventDefault();
+
+
+  const email =
+    document.getElementById(
+      "loginEmail"
+    ).value.trim();
+
+
+  const password =
+    document.getElementById(
+      "loginPassword"
+    ).value;
+
+
+  const submit =
+    document.getElementById(
+      "loginSubmit"
+    );
+
+
+  if (submit) {
+
+    submit.disabled =
+      true;
+
+    submit.textContent =
+      "Logging in...";
+
+  }
 
 
   try {
 
-    if (checkoutBtn) {
-
-      checkoutBtn.disabled =
-        true;
-
-      checkoutBtn.textContent =
-        "Processing...";
-
-    }
-
-
     const response =
       await fetch(
-        `${API_URL}/checkout`,
+        `${API_URL}/api/users/login`,
         {
           method: "POST",
 
           headers: {
-
             "Content-Type":
-              "application/json",
-
-            "Authorization":
-              "Bearer " + token
-
+              "application/json"
           },
 
           body:
             JSON.stringify({
-
-              payment_method:
-                "cod"
-
+              email,
+              password
             })
 
         }
@@ -1508,400 +2335,8 @@ async function checkout() {
 
       throw new Error(
         data.message ||
-        "Checkout failed"
+        "Login failed"
       );
-
-    }
-
-
-    cart = [];
-
-
-    localStorage.setItem(
-      "traanscomCart",
-      JSON.stringify(cart)
-    );
-
-
-    renderCart();
-
-
-    toast(
-      "Order placed successfully! Order #" +
-      (
-        data.order?.order_number ||
-        data.order?.id ||
-        ""
-      )
-    );
-
-
-    setTimeout(
-      () => {
-
-        closeCart();
-
-      },
-      1200
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "Checkout error:",
-      error
-    );
-
-
-    toast(
-      error.message ||
-      "Unable to place order. Please try again."
-    );
-
-
-  } finally {
-
-    if (checkoutBtn) {
-
-      checkoutBtn.disabled =
-        false;
-
-      checkoutBtn.textContent =
-        "Proceed to Checkout";
-
-    }
-
-  }
-
-}
-
-
-// =====================================================
-// LOGIN UI
-// =====================================================
-
-function createLoginUI() {
-
-  if (
-    document.getElementById(
-      "loginBox"
-    )
-  ) {
-    return;
-  }
-
-
-  const loginBox =
-    document.createElement(
-      "div"
-    );
-
-
-  loginBox.id =
-    "loginBox";
-
-
-  loginBox.innerHTML = `
-
-    <div
-      id="loginOverlay"
-      style="
-        position:fixed;
-        inset:0;
-        background:rgba(0,0,0,.55);
-        display:none;
-        align-items:center;
-        justify-content:center;
-        z-index:9999;
-      "
-    >
-
-      <div
-        style="
-          background:white;
-          width:360px;
-          max-width:90%;
-          padding:30px;
-          border-radius:18px;
-          box-shadow:
-            0 20px 60px
-            rgba(0,0,0,.25);
-        "
-      >
-
-        <h2
-          style="
-            margin-top:0;
-          "
-        >
-          Login to Traanscom
-        </h2>
-
-
-        <p
-          style="
-            color:#666;
-          "
-        >
-          Login to manage your
-          cart and orders.
-        </p>
-
-
-        <input
-          id="loginEmail"
-          type="email"
-          placeholder="Email address"
-          style="
-            width:100%;
-            box-sizing:border-box;
-            padding:13px;
-            margin:8px 0;
-            border:1px solid #ddd;
-            border-radius:8px;
-          "
-        >
-
-
-        <input
-          id="loginPassword"
-          type="password"
-          placeholder="Password"
-          style="
-            width:100%;
-            box-sizing:border-box;
-            padding:13px;
-            margin:8px 0;
-            border:1px solid #ddd;
-            border-radius:8px;
-          "
-        >
-
-
-        <button
-          id="loginSubmit"
-          style="
-            width:100%;
-            padding:13px;
-            margin-top:10px;
-            border:0;
-            border-radius:8px;
-            background:#111;
-            color:white;
-            cursor:pointer;
-            font-size:16px;
-          "
-        >
-          Login
-        </button>
-
-
-        <button
-          id="loginClose"
-          style="
-            width:100%;
-            padding:10px;
-            margin-top:8px;
-            border:0;
-            background:#eee;
-            border-radius:8px;
-            cursor:pointer;
-          "
-        >
-          Close
-        </button>
-
-
-        <p
-          id="loginMessage"
-          style="
-            margin-bottom:0;
-            text-align:center;
-          "
-        ></p>
-
-      </div>
-
-    </div>
-
-  `;
-
-
-  document.body.appendChild(
-    loginBox
-  );
-
-
-  const button =
-    document.createElement(
-      "button"
-    );
-
-
-  button.id =
-    "loginButton";
-
-
-  button.textContent =
-    "Login";
-
-
-  button.style.cssText = `
-
-    position:fixed;
-
-    right:20px;
-
-    bottom:20px;
-
-    z-index:9998;
-
-    padding:12px 20px;
-
-    border:0;
-
-    border-radius:25px;
-
-    background:#111;
-
-    color:white;
-
-    cursor:pointer;
-
-    font-weight:bold;
-
-    box-shadow:
-      0 5px 20px
-      rgba(0,0,0,.2);
-
-  `;
-
-
-  document.body.appendChild(
-    button
-  );
-
-
-  button.onclick = () => {
-
-    const overlay =
-      document.getElementById(
-        "loginOverlay"
-      );
-
-
-    if (overlay) {
-
-      overlay.style.display =
-        "flex";
-
-    }
-
-  };
-
-
-  document.getElementById(
-    "loginClose"
-  ).onclick = () => {
-
-    document.getElementById(
-      "loginOverlay"
-    ).style.display =
-      "none";
-
-  };
-
-
-  document.getElementById(
-    "loginSubmit"
-  ).onclick =
-    loginUser;
-
-}
-
-
-// =====================================================
-// LOGIN API
-// =====================================================
-
-async function loginUser() {
-
-  const email =
-    document.getElementById(
-      "loginEmail"
-    ).value.trim();
-
-
-  const password =
-    document.getElementById(
-      "loginPassword"
-    ).value;
-
-
-  const message =
-    document.getElementById(
-      "loginMessage"
-    );
-
-
-  if (!email || !password) {
-
-    message.textContent =
-      "Please enter email and password.";
-
-    message.style.color =
-      "red";
-
-    return;
-
-  }
-
-
-  try {
-
-    const response =
-      await fetch(
-        `${API_URL}/users/login`,
-        {
-          method: "POST",
-
-          headers: {
-
-            "Content-Type":
-              "application/json"
-
-          },
-
-          body:
-            JSON.stringify({
-
-              email:
-                email,
-
-              password:
-                password
-
-            })
-
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if (!response.ok) {
-
-      message.textContent =
-        data.message ||
-        "Login failed.";
-
-      message.style.color =
-        "red";
-
-      return;
 
     }
 
@@ -1920,43 +2355,17 @@ async function loginUser() {
     );
 
 
-    message.textContent =
-      "Login successful!";
+    closeLoginOverlay();
 
 
-    message.style.color =
-      "green";
+    updateLoginButton();
 
 
     await loadCartFromBackend();
 
 
-    setTimeout(
-      () => {
-
-        const overlay =
-          document.getElementById(
-            "loginOverlay"
-          );
-
-
-        if (overlay) {
-
-          overlay.style.display =
-            "none";
-
-        }
-
-
-        updateLoginButton();
-
-
-        toast(
-          `Welcome ${data.user.full_name}`
-        );
-
-      },
-      800
+    toast(
+      "Login successful"
     );
 
 
@@ -1968,12 +2377,23 @@ async function loginUser() {
     );
 
 
-    message.textContent =
-      "Cannot connect to server.";
+    toast(
+      error.message ||
+      "Unable to login"
+    );
 
 
-    message.style.color =
-      "red";
+  } finally {
+
+    if (submit) {
+
+      submit.disabled =
+        false;
+
+      submit.textContent =
+        "Login";
+
+    }
 
   }
 
@@ -1981,7 +2401,149 @@ async function loginUser() {
 
 
 // =====================================================
-// LOGIN BUTTON STATE
+// REGISTER
+// =====================================================
+
+async function registerUser(event) {
+
+  event.preventDefault();
+
+
+  const full_name =
+    document.getElementById(
+      "registerName"
+    ).value.trim();
+
+
+  const email =
+    document.getElementById(
+      "registerEmail"
+    ).value.trim();
+
+
+  const phone =
+    document.getElementById(
+      "registerPhone"
+    ).value.trim();
+
+
+  const password =
+    document.getElementById(
+      "registerPassword"
+    ).value;
+
+
+  const submit =
+    document.getElementById(
+      "registerSubmit"
+    );
+
+
+  if (submit) {
+
+    submit.disabled =
+      true;
+
+    submit.textContent =
+      "Creating...";
+
+  }
+
+
+  try {
+
+    const response =
+      await fetch(
+        `${API_URL}/api/users/register`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              full_name,
+              email,
+              password,
+              phone
+            })
+
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        "Registration failed"
+      );
+
+    }
+
+
+    toast(
+      "Account created successfully. Please login."
+    );
+
+
+    showLoginForm();
+
+
+    const loginEmail =
+      document.getElementById(
+        "loginEmail"
+      );
+
+
+    if (loginEmail) {
+
+      loginEmail.value =
+        email;
+
+    }
+
+
+  } catch (error) {
+
+    console.error(
+      "Registration error:",
+      error
+    );
+
+
+    toast(
+      error.message ||
+      "Unable to create account"
+    );
+
+
+  } finally {
+
+    if (submit) {
+
+      submit.disabled =
+        false;
+
+      submit.textContent =
+        "Create Account";
+
+    }
+
+  }
+
+}
+
+
+// =====================================================
+// LOGIN BUTTON / ACCOUNT MENU
 // =====================================================
 
 function updateLoginButton() {
@@ -1997,6 +2559,12 @@ function updateLoginButton() {
   }
 
 
+  const token =
+    localStorage.getItem(
+      "traanscomToken"
+    );
+
+
   const user =
     JSON.parse(
       localStorage.getItem(
@@ -2005,43 +2573,223 @@ function updateLoginButton() {
     );
 
 
-  if (user) {
-
-    button.textContent =
-      `👤 ${user.full_name}`;
-
-
-    button.onclick = () => {
-
-      loadMyOrders();
-
-    };
-
-
-  } else {
+  if (!token) {
 
     button.textContent =
       "Login";
 
+    button.onclick =
+      openLoginOverlay;
 
-    button.onclick = () => {
+    return;
 
-      const overlay =
-        document.getElementById(
-          "loginOverlay"
-        );
+  }
 
 
-      if (overlay) {
+  button.textContent =
+    user?.full_name
+      ? user.full_name
+      : "Account";
 
-        overlay.style.display =
-          "flex";
+
+  button.onclick =
+    openAccountMenu;
+
+}
+
+
+// =====================================================
+// ACCOUNT MENU
+// =====================================================
+
+function openAccountMenu() {
+
+  const old =
+    document.getElementById(
+      "accountMenuOverlay"
+    );
+
+
+  if (old) {
+    old.remove();
+  }
+
+
+  const overlay =
+    document.createElement(
+      "div"
+    );
+
+
+  overlay.id =
+    "accountMenuOverlay";
+
+
+  overlay.style.cssText = `
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+      rgba(0,0,0,.45);
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    z-index:10000;
+
+    padding:20px;
+
+  `;
+
+
+  const box =
+    document.createElement(
+      "div"
+    );
+
+
+  box.style.cssText = `
+
+    background:white;
+
+    width:360px;
+
+    max-width:100%;
+
+    border-radius:18px;
+
+    padding:25px;
+
+    box-sizing:border-box;
+
+    box-shadow:
+      0 20px 60px
+      rgba(0,0,0,.25);
+
+  `;
+
+
+  box.innerHTML = `
+
+    <h2
+      style="
+        margin-top:0;
+      "
+    >
+      My Account
+    </h2>
+
+
+    <button
+      id="accountOrdersBtn"
+      style="
+        width:100%;
+        padding:13px;
+        margin-bottom:10px;
+        border:0;
+        border-radius:8px;
+        background:#111;
+        color:white;
+        cursor:pointer;
+      "
+    >
+      My Orders
+    </button>
+
+
+    <button
+      id="accountLogoutBtn"
+      style="
+        width:100%;
+        padding:13px;
+        border:1px solid #ddd;
+        border-radius:8px;
+        background:white;
+        color:#111;
+        cursor:pointer;
+      "
+    >
+      Logout
+    </button>
+
+  `;
+
+
+  overlay.appendChild(
+    box
+  );
+
+
+  document.body.appendChild(
+    overlay
+  );
+
+
+  overlay.onclick =
+    event => {
+
+      if (
+        event.target === overlay
+      ) {
+
+        overlay.remove();
 
       }
 
     };
 
-  }
+
+  document.getElementById(
+    "accountOrdersBtn"
+  ).onclick = () => {
+
+    overlay.remove();
+
+    loadMyOrders();
+
+  };
+
+
+  document.getElementById(
+    "accountLogoutBtn"
+  ).onclick = () => {
+
+    logoutUser();
+
+    overlay.remove();
+
+  };
+
+}
+
+
+// =====================================================
+// LOGOUT
+// =====================================================
+
+function logoutUser() {
+
+  localStorage.removeItem(
+    "traanscomToken"
+  );
+
+
+  localStorage.removeItem(
+    "traanscomUser"
+  );
+
+
+  updateLoginButton();
+
+
+  toast(
+    "Logged out successfully"
+  );
 
 }
 
@@ -2061,8 +2809,10 @@ async function loadMyOrders() {
   if (!token) {
 
     toast(
-      "Please login to view your orders"
+      "Please login first"
     );
+
+    openLoginOverlay();
 
     return;
 
@@ -2073,15 +2823,13 @@ async function loadMyOrders() {
 
     const response =
       await fetch(
-        `${API_URL}/orders/my-orders`,
+        `${API_URL}/api/orders/my-orders`,
         {
           method: "GET",
 
           headers: {
-
             "Authorization":
               "Bearer " + token
-
           }
 
         }
@@ -2102,32 +2850,27 @@ async function loadMyOrders() {
     }
 
 
-    const orders =
+    showMyOrders(
       Array.isArray(data)
         ? data
         : (
             data.orders ||
-            data.data ||
             []
-          );
-
-
-    showMyOrders(
-      orders
+          )
     );
 
 
   } catch (error) {
 
     console.error(
-      "My Orders Error:",
+      "Orders error:",
       error
     );
 
 
     toast(
       error.message ||
-      "Unable to load your orders"
+      "Unable to load orders"
     );
 
   }
@@ -2139,7 +2882,9 @@ async function loadMyOrders() {
 // SHOW MY ORDERS
 // =====================================================
 
-function showMyOrders(orders) {
+function showMyOrders(
+  orders
+) {
 
   const existing =
     document.getElementById(
@@ -2177,7 +2922,7 @@ function showMyOrders(orders) {
 
     justify-content:center;
 
-    z-index:10000;
+    z-index:10001;
 
     padding:20px;
 
@@ -2196,7 +2941,7 @@ function showMyOrders(orders) {
 
     background:white;
 
-    width:850px;
+    width:700px;
 
     max-width:100%;
 
@@ -2210,56 +2955,24 @@ function showMyOrders(orders) {
 
     box-sizing:border-box;
 
-    box-shadow:
-      0 20px 60px
-      rgba(0,0,0,.25);
-
   `;
 
 
-  let ordersHtml = "";
+  let ordersHtml;
 
 
-  if (
-    !orders ||
-    !orders.length
-  ) {
+  if (!orders.length) {
 
     ordersHtml = `
 
       <div
         style="
           text-align:center;
-          padding:50px 20px;
-          color:#666;
+          padding:35px 10px;
+          color:#777;
         "
       >
-
-        <div
-          style="
-            font-size:50px;
-            margin-bottom:15px;
-          "
-        >
-          📦
-        </div>
-
-
-        <h3
-          style="
-            margin:0 0 8px;
-            color:#111;
-          "
-        >
-          No orders yet
-        </h3>
-
-
-        <p>
-          Your placed orders
-          will appear here.
-        </p>
-
+        You have no orders yet.
       </div>
 
     `;
@@ -2267,187 +2980,135 @@ function showMyOrders(orders) {
   } else {
 
     ordersHtml =
-      orders.map(order => {
+      orders.map(order => `
 
-        const currency =
-          (
-            order.currency ||
-            "PKR"
-          ).toUpperCase();
-
-
-        const total =
-          money(
-            Number(
-              order.total || 0
-            ),
-            currency
-          );
-
-
-        const date =
-          order.created_at
-            ? new Date(
-                order.created_at
-              ).toLocaleString()
-            : "-";
-
-
-        const status =
-          String(
-            order.order_status ||
-            "pending"
-          ).toUpperCase();
-
-
-        const paymentStatus =
-          String(
-            order.payment_status ||
-            "pending"
-          ).toUpperCase();
-
-
-        return `
+        <div
+          style="
+            border:1px solid #eee;
+            border-radius:12px;
+            padding:16px;
+            margin-bottom:12px;
+          "
+        >
 
           <div
             style="
-              border:1px solid #e5e5e5;
-              border-radius:14px;
-              padding:18px;
-              margin-bottom:14px;
+              display:flex;
+              justify-content:space-between;
+              gap:15px;
+              flex-wrap:wrap;
             "
           >
 
-            <div
-              style="
-                display:flex;
-                justify-content:space-between;
-                gap:15px;
-                flex-wrap:wrap;
-              "
-            >
+            <div>
 
-              <div>
-
-                <h3
-                  style="
-                    margin:0 0 7px;
-                  "
-                >
-                  Order #${
-                    order.order_number ||
-                    order.id
-                  }
-                </h3>
-
-
-                <p
-                  style="
-                    margin:0;
-                    color:#666;
-                    font-size:14px;
-                  "
-                >
-                  ${date}
-                </p>
-
-              </div>
+              <strong>
+                Order #${
+                  order.order_number ||
+                  order.id
+                }
+              </strong>
 
 
               <div
                 style="
-                  text-align:right;
+                  color:#777;
+                  font-size:13px;
+                  margin-top:5px;
                 "
               >
-
-                <strong
-                  style="
-                    font-size:18px;
-                  "
-                >
-                  ${total}
-                </strong>
-
+                ${
+                  order.created_at
+                    ? new Date(
+                        order.created_at
+                      ).toLocaleString()
+                    : ""
+                }
               </div>
 
             </div>
 
 
-            <div
-              style="
-                display:flex;
-                gap:10px;
-                flex-wrap:wrap;
-                margin-top:15px;
-              "
-            >
-
-              <span
-                style="
-                  padding:6px 10px;
-                  background:#f3f3f3;
-                  border-radius:20px;
-                  font-size:12px;
-                "
-              >
-                Order: ${status}
-              </span>
-
-
-              <span
-                style="
-                  padding:6px 10px;
-                  background:#f3f3f3;
-                  border-radius:20px;
-                  font-size:12px;
-                "
-              >
-                Payment:
-                ${paymentStatus}
-              </span>
-
-
-              <span
-                style="
-                  padding:6px 10px;
-                  background:#f3f3f3;
-                  border-radius:20px;
-                  font-size:12px;
-                "
-              >
-                ${
-                  order.payment_method ||
-                  "COD"
-                }
-              </span>
-
-            </div>
-
-
-            <button
-              onclick="
-                viewMyOrder(
-                  ${order.id}
-                )
-              "
-              style="
-                margin-top:15px;
-                padding:10px 16px;
-                border:0;
-                border-radius:8px;
-                background:#111;
-                color:white;
-                cursor:pointer;
-              "
-            >
-              View Details
-            </button>
+            <strong>
+              ${money(
+                Number(
+                  order.total || 0
+                ),
+                (
+                  order.currency ||
+                  "PKR"
+                ).toUpperCase()
+              )}
+            </strong>
 
           </div>
 
-        `;
 
-      }).join("");
+          <div
+            style="
+              margin-top:10px;
+              display:flex;
+              gap:10px;
+              flex-wrap:wrap;
+            "
+          >
+
+            <span
+              style="
+                background:#f1f1f1;
+                padding:5px 9px;
+                border-radius:20px;
+                font-size:12px;
+              "
+            >
+              ${
+                String(
+                  order.order_status ||
+                  "pending"
+                ).toUpperCase()
+              }
+            </span>
+
+
+            <span
+              style="
+                background:#f1f1f1;
+                padding:5px 9px;
+                border-radius:20px;
+                font-size:12px;
+              "
+            >
+              ${
+                order.payment_method ||
+                "COD"
+              }
+            </span>
+
+          </div>
+
+
+          <button
+            onclick="
+              viewMyOrder(
+                ${order.id}
+              )
+            "
+            style="
+              margin-top:15px;
+              padding:10px 16px;
+              border:0;
+              border-radius:8px;
+              background:#111;
+              color:white;
+              cursor:pointer;
+            "
+          >
+            View Details
+          </button>
+
+        </div>
+
+      `).join("");
 
   }
 
@@ -2573,7 +3234,7 @@ async function viewMyOrder(orderId) {
 
     const response =
       await fetch(
-        `${API_URL}/orders/my-orders/${orderId}`,
+        `${API_URL}/api/orders/my-orders/${orderId}`,
         {
           method: "GET",
 
@@ -3045,6 +3706,867 @@ function showOrderDetails(
 
 
 // =====================================================
+// SHIPPING ADDRESS MODAL
+// =====================================================
+
+function openShippingAddressModal() {
+
+  const existing =
+    document.getElementById(
+      "shippingAddressOverlay"
+    );
+
+
+  if (existing) {
+    existing.remove();
+  }
+
+
+  const overlay =
+    document.createElement(
+      "div"
+    );
+
+
+  overlay.id =
+    "shippingAddressOverlay";
+
+
+  overlay.style.cssText = `
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+      rgba(0,0,0,.55);
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    z-index:10002;
+
+    padding:20px;
+
+    box-sizing:border-box;
+
+  `;
+
+
+  const box =
+    document.createElement(
+      "div"
+    );
+
+
+  box.style.cssText = `
+
+    width:620px;
+
+    max-width:100%;
+
+    max-height:90vh;
+
+    overflow:auto;
+
+    background:white;
+
+    border-radius:18px;
+
+    padding:28px;
+
+    box-sizing:border-box;
+
+    box-shadow:
+      0 20px 60px
+      rgba(0,0,0,.25);
+
+  `;
+
+
+  box.innerHTML = `
+
+    <div
+      style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:20px;
+      "
+    >
+
+      <div>
+
+        <p
+          style="
+            margin:0 0 5px;
+            color:#777;
+            font-size:12px;
+            letter-spacing:1px;
+          "
+        >
+          CHECKOUT
+        </p>
+
+
+        <h2
+          style="
+            margin:0;
+          "
+        >
+          Shipping Address
+        </h2>
+
+      </div>
+
+
+      <button
+        id="closeShippingAddress"
+        type="button"
+        style="
+          border:0;
+          background:#eee;
+          width:38px;
+          height:38px;
+          border-radius:50%;
+          font-size:24px;
+          cursor:pointer;
+        "
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <form id="shippingAddressForm">
+
+      <label
+        style="
+          display:block;
+          font-weight:600;
+          margin-bottom:6px;
+        "
+      >
+        Full Name *
+      </label>
+
+
+      <input
+        id="shippingFullName"
+        type="text"
+        required
+        autocomplete="name"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          margin-bottom:14px;
+        "
+      >
+
+
+      <label
+        style="
+          display:block;
+          font-weight:600;
+          margin-bottom:6px;
+        "
+      >
+        Phone Number *
+      </label>
+
+
+      <input
+        id="shippingPhone"
+        type="tel"
+        required
+        autocomplete="tel"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          margin-bottom:14px;
+        "
+      >
+
+
+      <label
+        style="
+          display:block;
+          font-weight:600;
+          margin-bottom:6px;
+        "
+      >
+        Address *
+      </label>
+
+
+      <input
+        id="shippingAddress1"
+        type="text"
+        required
+        autocomplete="street-address"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          margin-bottom:14px;
+        "
+      >
+
+
+      <label
+        style="
+          display:block;
+          font-weight:600;
+          margin-bottom:6px;
+        "
+      >
+        Address Line 2
+      </label>
+
+
+      <input
+        id="shippingAddress2"
+        type="text"
+        autocomplete="address-line2"
+        style="
+          width:100%;
+          box-sizing:border-box;
+          padding:12px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          margin-bottom:14px;
+        "
+      >
+
+
+      <div
+        style="
+          display:grid;
+          grid-template-columns:
+            repeat(2,minmax(0,1fr));
+          gap:12px;
+        "
+      >
+
+        <div>
+
+          <label
+            style="
+              display:block;
+              font-weight:600;
+              margin-bottom:6px;
+            "
+          >
+            City *
+          </label>
+
+
+          <input
+            id="shippingCity"
+            type="text"
+            required
+            autocomplete="address-level2"
+            style="
+              width:100%;
+              box-sizing:border-box;
+              padding:12px;
+              border:1px solid #ddd;
+              border-radius:8px;
+            "
+          >
+
+        </div>
+
+
+        <div>
+
+          <label
+            style="
+              display:block;
+              font-weight:600;
+              margin-bottom:6px;
+            "
+          >
+            Province / State
+          </label>
+
+
+          <input
+            id="shippingState"
+            type="text"
+            autocomplete="address-level1"
+            style="
+              width:100%;
+              box-sizing:border-box;
+              padding:12px;
+              border:1px solid #ddd;
+              border-radius:8px;
+            "
+          >
+
+        </div>
+
+      </div>
+
+
+      <div
+        style="
+          display:grid;
+          grid-template-columns:
+            repeat(2,minmax(0,1fr));
+          gap:12px;
+          margin-top:14px;
+        "
+      >
+
+        <div>
+
+          <label
+            style="
+              display:block;
+              font-weight:600;
+              margin-bottom:6px;
+            "
+          >
+            Postal Code
+          </label>
+
+
+          <input
+            id="shippingPostalCode"
+            type="text"
+            autocomplete="postal-code"
+            style="
+              width:100%;
+              box-sizing:border-box;
+              padding:12px;
+              border:1px solid #ddd;
+              border-radius:8px;
+            "
+          >
+
+        </div>
+
+
+        <div>
+
+          <label
+            style="
+              display:block;
+              font-weight:600;
+              margin-bottom:6px;
+            "
+          >
+            Country *
+          </label>
+
+
+          <input
+            id="shippingCountry"
+            type="text"
+            value="Pakistan"
+            required
+            autocomplete="country-name"
+            style="
+              width:100%;
+              box-sizing:border-box;
+              padding:12px;
+              border:1px solid #ddd;
+              border-radius:8px;
+            "
+          >
+
+        </div>
+
+      </div>
+
+
+      <div
+        style="
+          margin-top:18px;
+          padding:14px;
+          background:#f7f7f7;
+          border-radius:10px;
+        "
+      >
+
+        <strong>
+          Payment Method
+        </strong>
+
+        <p
+          style="
+            margin:5px 0 0;
+            color:#666;
+          "
+        >
+          Cash on Delivery (COD)
+        </p>
+
+      </div>
+
+
+      <button
+        id="saveAddressCheckout"
+        type="submit"
+        style="
+          width:100%;
+          padding:14px;
+          margin-top:18px;
+          border:0;
+          border-radius:8px;
+          background:#111;
+          color:white;
+          cursor:pointer;
+          font-size:15px;
+          font-weight:600;
+        "
+      >
+        Save Address & Place Order
+      </button>
+
+
+      <button
+        id="cancelShippingAddress"
+        type="button"
+        style="
+          width:100%;
+          padding:13px;
+          margin-top:10px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          background:white;
+          color:#111;
+          cursor:pointer;
+        "
+      >
+        Cancel
+      </button>
+
+    </form>
+
+  `;
+
+
+  overlay.appendChild(
+    box
+  );
+
+
+  document.body.appendChild(
+    overlay
+  );
+
+
+  const user =
+    JSON.parse(
+      localStorage.getItem(
+        "traanscomUser"
+      ) || "null"
+    );
+
+
+  if (user) {
+
+    const name =
+      document.getElementById(
+        "shippingFullName"
+      );
+
+
+    const phone =
+      document.getElementById(
+        "shippingPhone"
+      );
+
+
+    if (
+      name &&
+      user.full_name
+    ) {
+
+      name.value =
+        user.full_name;
+
+    }
+
+
+    if (
+      phone &&
+      user.phone
+    ) {
+
+      phone.value =
+        user.phone;
+
+    }
+
+  }
+
+
+  document.getElementById(
+    "closeShippingAddress"
+  ).onclick = () => {
+
+    overlay.remove();
+
+  };
+
+
+  document.getElementById(
+    "cancelShippingAddress"
+  ).onclick = () => {
+
+    overlay.remove();
+
+  };
+
+
+  overlay.onclick =
+    event => {
+
+      if (
+        event.target === overlay
+      ) {
+
+        overlay.remove();
+
+      }
+
+    };
+
+
+  document.getElementById(
+    "shippingAddressForm"
+  ).onsubmit =
+    saveShippingAddress;
+
+}
+
+
+// =====================================================
+// SAVE ADDRESS + PLACE ORDER
+// =====================================================
+
+async function saveShippingAddress(
+  event
+) {
+
+  event.preventDefault();
+
+
+  const token =
+    localStorage.getItem(
+      "traanscomToken"
+    );
+
+
+  if (!token) {
+
+    toast(
+      "Please login before checkout"
+    );
+
+    openLoginOverlay();
+
+    return;
+
+  }
+
+
+  const fullName =
+    document.getElementById(
+      "shippingFullName"
+    ).value.trim();
+
+
+  const phone =
+    document.getElementById(
+      "shippingPhone"
+    ).value.trim();
+
+
+  const addressLine1 =
+    document.getElementById(
+      "shippingAddress1"
+    ).value.trim();
+
+
+  const addressLine2 =
+    document.getElementById(
+      "shippingAddress2"
+    ).value.trim();
+
+
+  const city =
+    document.getElementById(
+      "shippingCity"
+    ).value.trim();
+
+
+  const state =
+    document.getElementById(
+      "shippingState"
+    ).value.trim();
+
+
+  const postalCode =
+    document.getElementById(
+      "shippingPostalCode"
+    ).value.trim();
+
+
+  const country =
+    document.getElementById(
+      "shippingCountry"
+    ).value.trim();
+
+
+  if (
+    !fullName ||
+    !phone ||
+    !addressLine1 ||
+    !city ||
+    !country
+  ) {
+
+    toast(
+      "Please fill all required address fields"
+    );
+
+    return;
+
+  }
+
+
+  const button =
+    document.getElementById(
+      "saveAddressCheckout"
+    );
+
+
+  if (button) {
+
+    button.disabled =
+      true;
+
+    button.textContent =
+      "Processing...";
+
+  }
+
+
+  try {
+
+    // -----------------------------------------------
+    // 1. Save shipping address
+    // -----------------------------------------------
+
+    const addressResponse =
+      await fetch(
+        `${API_URL}/api/addresses`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            "Authorization":
+              "Bearer " + token
+          },
+
+          body:
+            JSON.stringify({
+
+              full_name:
+                fullName,
+
+              address_line1:
+                addressLine1,
+
+              address_line2:
+                addressLine2 ||
+                null,
+
+              city:
+                city,
+
+              state:
+                state ||
+                null,
+
+              postal_code:
+                postalCode ||
+                null,
+
+              country:
+                country,
+
+              phone:
+                phone
+
+            })
+
+        }
+      );
+
+
+    const addressData =
+      await addressResponse.json();
+
+
+    if (!addressResponse.ok) {
+
+      throw new Error(
+        addressData.message ||
+        "Unable to save shipping address"
+      );
+
+    }
+
+
+    // -----------------------------------------------
+    // 2. Checkout
+    // -----------------------------------------------
+
+    const checkoutResponse =
+      await fetch(
+        `${API_URL}/api/checkout`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            "Authorization":
+              "Bearer " + token
+          },
+
+          body:
+            JSON.stringify({
+              payment_method:
+                "COD"
+            })
+
+        }
+      );
+
+
+    const checkoutData =
+      await checkoutResponse.json();
+
+
+    if (!checkoutResponse.ok) {
+
+      throw new Error(
+        checkoutData.message ||
+        "Unable to place order"
+      );
+
+    }
+
+
+    // -----------------------------------------------
+    // 3. Clear local cart
+    // -----------------------------------------------
+
+    cart = [];
+
+
+    localStorage.setItem(
+      "traanscomCart",
+      JSON.stringify(cart)
+    );
+
+
+    renderCart();
+
+
+    // -----------------------------------------------
+    // 4. Close checkout UI
+    // -----------------------------------------------
+
+    const overlay =
+      document.getElementById(
+        "shippingAddressOverlay"
+      );
+
+
+    if (overlay) {
+      overlay.remove();
+    }
+
+
+    closeCart();
+
+
+    // -----------------------------------------------
+    // 5. Refresh products / stock
+    // -----------------------------------------------
+
+    await loadProducts();
+
+
+    // -----------------------------------------------
+    // 6. Success message
+    // -----------------------------------------------
+
+    toast(
+      "Order placed successfully! Order #" +
+      (
+        checkoutData.order?.order_number ||
+        checkoutData.order?.id ||
+        ""
+      )
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Checkout error:",
+      error
+    );
+
+
+    toast(
+      error.message ||
+      "Unable to place order. Please try again."
+    );
+
+
+  } finally {
+
+    if (button) {
+
+      button.disabled =
+        false;
+
+      button.textContent =
+        "Save Address & Place Order";
+
+    }
+
+  }
+
+}
+
+
+// =====================================================
 // BUTTON EVENTS
 // =====================================================
 
@@ -3165,7 +4687,7 @@ updateLoginButton();
 
 
 // =====================================================
-// LOAD BACKEND CART IF ALREADY LOGGED IN
+// LOAD BACKEND CART IF LOGGED IN
 // =====================================================
 
 if (
