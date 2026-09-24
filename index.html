@@ -18,11 +18,12 @@
       <a href="#home">Home</a><a href="#shop">Shop</a><a href="#categories">Categories</a>
       <a href="#deals">Deals</a><a href="#about">About</a>
     </nav>
-    <div class="nav-actions">
-      <button class="icon-btn" id="searchBtn" aria-label="Search">⌕</button>
-      <button class="icon-btn" id="cartBtn" aria-label="Cart">🛒<b id="cartCount">0</b></button>
-      <button class="menu-btn" id="menuBtn">☰</button>
-    </div>
+<div class="nav-actions">
+  <button class="icon-btn" id="searchBtn" aria-label="Search">⌕</button>
+  <button class="icon-btn" id="cartBtn" aria-label="Cart">🛒<b id="cartCount">0</b></button>
+  <a class="admin-btn" href="https://traanscom-admin.onrender.com" target="_blank">Admin</a>
+  <button class="menu-btn" id="menuBtn">☰</button>
+</div>
   </div>
   <div class="mobile-nav" id="mobileNav">
     <a href="#home">Home</a><a href="#shop">Shop</a><a href="#categories">Categories</a><a href="#deals">Deals</a><a href="#about">About</a>
@@ -84,7 +85,7 @@
 <div class="overlay" id="overlay"></div>
 <aside class="cart-drawer" id="cartDrawer"><div class="drawer-head"><h2>Your Cart</h2><button id="closeCart">×</button></div><div id="cartItems" class="cart-items"></div><div class="cart-footer"><div><span>Subtotal</span><strong id="cartTotal">Rs. 0</strong></div><button class="btn primary full" id="checkoutBtn">Proceed to Checkout</button></div></aside>
 
-<div class="modal" id="productModal"><button class="modal-close" id="closeModal">×</button><div id="modalContent"></div></div>
+<div class="modal" id="modal"><button class="modal-close" id="closeModal">×</button><div id="modalContent"></div></div>
 <div class="toast" id="toast"></div>
 <script src="script.js"></script>
 </body>
