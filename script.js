@@ -1098,7 +1098,7 @@ function openProduct(id) {
             salePrice > 0
               ? salePrice
               : price,
-            "PKR"
+            product.currency
           )}
         </div>
 
