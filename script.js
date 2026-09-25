@@ -253,80 +253,160 @@ function productImageHtml(
 }
 
 
-// =====================================================
-// LOAD PRODUCTS FROM BACKEND
-// =====================================================
-
 async function loadProducts() {
 
   try {
 
-    const response =
-      await fetch(
-        `${API_URL}/api/products`,
-        {
-          method: "GET",
-          headers: {
-            "Accept": "application/json"
-          }
-        }
-      );
+    const response = await fetch(
+      `${API_URL}/api/products`,
+      {
+        method: "GET",
+        headers: {
+          "Accept": "application/json"
+        },
+        cache: "no-store"
+      }
+    );
 
-    const data =
-      await getJson(response);
+    const data = await response.json();
 
     if (!response.ok) {
-
       throw new Error(
-        data.message ||
+        data?.message ||
         "Failed to load products"
       );
     }
 
     if (!Array.isArray(data)) {
-
       throw new Error(
         "Products API did not return an array"
       );
     }
 
-
     products = data.map(p => {
 
       const category =
         p.category_name ||
+        p.category ||
         "Uncategorized";
+
+      const currency =
+        String(
+          p.currency ||
+          p.currency_code ||
+          "PKR"
+        )
+        .trim()
+        .toUpperCase();
+
+      let price =
+        Number(p.price);
+
+      let salePrice =
+        Number(p.sale_price);
+
+      if (!Number.isFinite(price)) {
+
+        if (currency === "USD") {
+          price = Number(p.price_usd);
+        }
+
+        else if (currency === "GBP") {
+          price = Number(p.price_gbp);
+        }
+
+        else {
+          price = Number(p.price_pkr);
+        }
+      }
+
+      if (
+        !Number.isFinite(price) ||
+        price < 0
+      ) {
+        price = 0;
+      }
+
+
+      if (!Number.isFinite(salePrice)) {
+
+        if (currency === "USD") {
+          salePrice = Number(p.sale_price_usd);
+        }
+
+        else if (currency === "GBP") {
+          salePrice = Number(p.sale_price_gbp);
+        }
+
+        else {
+          salePrice = Number(p.sale_price_pkr);
+        }
+      }
+
+      if (
+        !Number.isFinite(salePrice) ||
+        salePrice < 0
+      ) {
+        salePrice = 0;
+      }
 
 
       const pricePkr =
-        Number(
-          p.price_pkr ?? 0
-        );
+        Number(p.price_pkr ?? 0);
 
       const priceUsd =
-        Number(
-          p.price_usd ?? 0
-        );
+        Number(p.price_usd ?? 0);
 
       const priceGbp =
-        Number(
-          p.price_gbp ?? 0
-        );
-
+        Number(p.price_gbp ?? 0);
 
       const salePkr =
-        Number(
-          p.sale_price_pkr ?? 0
-        );
+        Number(p.sale_price_pkr ?? 0);
 
       const saleUsd =
-        Number(
-          p.sale_price_usd ?? 0
-        );
+        Number(p.sale_price_usd ?? 0);
 
       const saleGbp =
+        Number(p.sale_price_gbp ?? 0);
+
+
+      let imageUrl =
+        p.image_url ||
+        p.primary_image_url ||
+        p.imageUrl ||
+        null;
+
+
+      if (
+        !imageUrl &&
+        Array.isArray(p.images) &&
+        p.images.length > 0
+      ) {
+
+        const primaryImage =
+          p.images.find(
+            image =>
+              image &&
+              (
+                image.is_primary === true ||
+                image.isPrimary === true
+              )
+          );
+
+        imageUrl =
+          primaryImage?.image_url ||
+          primaryImage?.url ||
+          p.images[0]?.image_url ||
+          p.images[0]?.url ||
+          null;
+      }
+
+
+      const stock =
         Number(
-          p.sale_price_gbp ?? 0
+          p.stock_quantity ??
+          p.stock ??
+          0
         );
 
 
@@ -336,7 +416,8 @@ async function loadProducts() {
           Number(p.id),
 
         name:
-          p.name || "Unnamed Product",
+          p.name ||
+          "Unnamed Product",
 
         cat:
           category,
@@ -350,13 +431,16 @@ async function loadProducts() {
           "Quality product from Traanscom.",
 
         currency:
-          "PKR",
+          currency,
 
         price:
-          pricePkr,
+          price,
 
         sale_price:
-          salePkr,
+          salePrice,
+
+        old:
+          price,
 
         price_pkr:
           pricePkr,
@@ -376,13 +460,10 @@ async function loadProducts() {
         sale_price_gbp:
           saleGbp,
 
-        old:
-          pricePkr,
-
         stock:
-          Number(
-            p.stock_quantity || 0
-          ),
+          Number.isFinite(stock)
+            ? stock
+            : 0,
 
         sku:
           p.sku || "",
@@ -402,9 +483,7 @@ async function loadProducts() {
           getCategoryEmoji(category),
 
         image_url:
-          p.image_url ||
-          p.primary_image_url ||
-          null,
+          imageUrl,
 
         image_is_primary:
           p.image_is_primary === true
@@ -420,7 +499,32 @@ async function loadProducts() {
     );
 
 
+    console.log(
+      "PRICE CHECK:",
+      products.map(product => ({
+        id:
+          product.id,
+
+        name:
+          product.name,
+
+        currency:
+          product.currency,
+
+        price:
+          product.price,
+
+        sale_price:
+          product.sale_price,
+
+        image_url:
+          product.image_url
+      }))
+    );
+
+
     renderProducts();
+
     renderCart();
 
 
@@ -447,6 +551,7 @@ async function loadProducts() {
           Please try again later.
         </p>
       `;
+
     }
 
   }
