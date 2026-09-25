@@ -1,4 +1,3 @@
-```javascript
 console.log("TRAANSCOM SCRIPT LOADED");
 
 const API_URL = "https://traanscom-backend-api.onrender.com";
@@ -5210,4 +5209,4 @@ if (
   initTraanscom();
 
 }
-```
+
